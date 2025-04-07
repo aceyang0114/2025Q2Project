@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>即時聊天室</title>
+</head>
+<body>
+    <h2>聊天室</h2>
+    <input id="input" placeholder="輸入訊息">
+    <form action="/clear" method="POST" onsubmit="return confirm('你確定要清除所有資料嗎？')">
+    <button type="submit" style="background:red;color:white;padding:10px;border-radius:5px;">
+        🔴 一鍵清除資料
+    </button>
+    </form>
+    <button onclick="sendData()">送出</button>
+
+    <ul id="messages">
+        {% for message in messages %}
+            <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="/static/script.js"></script>
+</body>
+</html>
