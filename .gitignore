@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# 虛擬環境
+venv/
+env/
+ENV/
+.venv/
+.ENV/
+
+# 編譯 / 專案暫存檔
+*.log
+*.tmp
+*.bak
+*.swp
+*.DS_Store
+*.egg-info/
+
+# VSCode 設定
+.vscode/
+
+# Jupyter Notebook checkpoint
+.ipynb_checkpoints/
+
+# PyInstaller
+dist/
+build/
+
+# dotenv 檔
+.env
