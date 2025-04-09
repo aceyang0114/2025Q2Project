@@ -6,11 +6,11 @@ import os
 # 建立 Flask 和資料庫
 app = Flask(__name__)
 socketio = SocketIO(app)
-DATABASE = 'database.db'
+DATABASE = 'TrailerForms.db'
 
 # 取得資料庫資料
 def get_db():
-    db = getattr(g, '_database', None)
+    db = getattr(g, '_database_', None)
     if db is None:
         db = g._database = sqlite3.connect(DATABASE)
     return db
@@ -59,7 +59,7 @@ def handle_submit(data):
 # 清除資料庫資料
 @app.route('/clear', methods=['POST'])
 def clear_data():
-    conn = sqlite3.connect('database.db')  # 換成你的資料庫檔名
+    conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
     cursor.execute('DELETE FROM messages')  # 換成你的資料表名稱
     conn.commit()
@@ -70,4 +70,4 @@ def clear_data():
 
 if __name__ == '__main__':
     init_db()
-    socketio.run(app, host='0.0.0.0', port=5000)
+    socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)

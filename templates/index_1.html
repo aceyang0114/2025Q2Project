@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>MXIC Fab5 槽車表單系統</title>
+    <style>
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .title {
+            flex: 1;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .logo {
+            width: 120px;
+        }
+
+        button {
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        #input {
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOGO + 標題列 -->
+    <div class="header">
+        <div class="title">MXIC Fab5 槽車表單系統</div>
+        <img src="{{ url_for('static', filename='Image/Business_LOGO.png') }}" alt="Business Logo" class="logo">
+    </div>
+
+    <h2>表單清單</h2>
+
+    <input id="input" placeholder="輸入表單名稱">
+
+    <form action="/clear" method="POST" onsubmit="return confirm('你確定要清除所有資料嗎？')">
+        <button type="submit">清除所有資料</button>
+    </form>
+
+    <button onclick="sendData()">送出</button>
+
+    <ul id="messages">
+        {% for message in messages %}
+            <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="/static/script.js"></script>
+</body>
+</html>

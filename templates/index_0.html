@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MXIC_Fab5_槽車表單系統</title>
+</head>
+<body>
+    <figure style="text-align: center;">
+    <img src="{{ url_for('static', filename='Image/Business_LOGO.png') }}" alt="Business Logo" style="width: 200px;">
+    </figure>
+    <h2>表單清單</h2>
+    <input id="input" placeholder="輸入表單名稱">
+<!--    <form action="/clear" method="POST" onsubmit="return confirm('你確定要清除所有資料嗎？')">-->
+    <form action="/clear" method="POST" onsubmit="return confirm('你確定要清除所有資料嗎？')">
+    <button type="submit" style=padding:10px;border-radius:5px;">
+        清除所有資料
+    </button>
+    </form>
+    <button onclick="sendData()">送出</button>
+
+    <ul id="messages">
+        {% for message in messages %}
+            <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="/static/script.js"></script>
+</body>
+</html>
