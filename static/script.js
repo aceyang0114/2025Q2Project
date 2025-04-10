@@ -1,16 +1,29 @@
 const socket = io();
+const input = document.getElementById("input");
+const messages = document.getElementById("messages");
+
+// 按 Enter 送出，Shift+Enter 則換行
+input.addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        // event.preventDefault(); // 阻止換行
+        sendData();
+    }
+});
 
 function sendData() {
-    const input = document.getElementById('input');
+    const input = document.getElementById("input");
     const text = input.value.trim();
-    if (text === "") return;
-
-    socket.emit('submit_data', { text: text });
-    input.value = "";
+    if (text) {
+        socket.emit("submit_data", { text });
+        input.value = ""; // 清空輸入欄
+    }
 }
 
-socket.on('new_data', function(data) {
-    const li = document.createElement('li');
+// 新資料到來時，新增到列表底部
+socket.on("new_data", function(data) {
+    const li = document.createElement("li");
+    li.className = "list-group-item";
     li.textContent = data.text;
-    document.getElementById('messages').appendChild(li);
+    messages.appendChild(li);
+    messages.scrollTop = messages.scrollHeight; // 自動捲到底部
 });
