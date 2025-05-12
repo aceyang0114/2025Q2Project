@@ -1,23 +1,7 @@
 from flask import Flask, render_template, g, request, redirect, url_for
 from flask_socketio import SocketIO, emit
 import sqlite3
-import pymssql
 import os
-
-# 請根據你的 SQL Server 參數調整
-SERVER = 'localhost'        # 或遠端 IP
-DATABASE = 'YourDatabase'   # 資料庫名稱
-USERNAME = 'your_user'      # SQL 登入帳號
-PASSWORD = 'your_password'  # SQL 密碼
-DRIVER = 'ODBC Driver 17 for SQL Server'  # 驅動程式名稱，依你電腦安裝為準
-
-conn = pymssql.connect(
-    server='<server-address>',
-    user='<username>',
-    password='<password>',
-    database='<database-name>',
-    as_dict=True
-)
 
 app = Flask(__name__)
 socketio = SocketIO(app)

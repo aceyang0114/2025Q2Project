@@ -41,10 +41,10 @@
 
     <!-- 按鈕列 -->
     <div class="d-flex flex-column flex-sm-row gap-2 mb-4">
+        <button onclick="sendData()" class="btn btn-primary w-100">送出</button>
         <form action="/clear" method="POST" onsubmit="return confirm('你確定要清除所有資料嗎？')" class="w-100">
             <button type="submit" class="btn btn-danger w-100">清除所有資料</button>
         </form>
-        <button onclick="sendData()" class="btn btn-primary w-100">送出</button>
     </div>
 
     <!-- 清單訊息 -->
