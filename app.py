@@ -1,88 +1,92 @@
-from flask import Flask, render_template, g, request, redirect, url_for
+from flask import Flask, render_template, g, request, redirect, url_for, jsonify
 from flask_socketio import SocketIO, emit
 import sqlite3
 import pymssql
 import os
 
-# 請根據你的 SQL Server 參數調整
-SERVER = 'localhost'        # 或遠端 IP
-DATABASE = 'YourDatabase'   # 資料庫名稱
-USERNAME = 'your_user'      # SQL 登入帳號
-PASSWORD = 'your_password'  # SQL 密碼
-DRIVER = 'ODBC Driver 17 for SQL Server'  # 驅動程式名稱，依你電腦安裝為準
-
-conn = pymssql.connect(
-    server='<server-address>',
-    user='<username>',
-    password='<password>',
-    database='<database-name>',
-    as_dict=True
-)
+USERNAME = 'sa'
+PASSWORD = 'mxicagb2024'
 
 app = Flask(__name__)
 socketio = SocketIO(app)
-DATABASE = 'database.db'
 
-def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-    return db
+# SQL Server Express 連線，進行資料庫互動
+def get_connection():
+    return pymssql.connect(
+        server='AIR-PC01\\FIRSTDBFROMACE',
+        user=USERNAME,
+        password=PASSWORD,  # 同上
+        database='InsertDataDB',
+        charset='UTF-8'
+    )
 
-@app.teardown_appcontext
-def close_connection(exception):
-    db = getattr(g, '_database', None)
-    if db is not None:
-        db.close()
-
-def init_db():
-    if not os.path.exists(DATABASE):
-        conn = sqlite3.connect(DATABASE)
-        cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                content TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        conn.commit()
-        conn.close()
-        print("✅ 已建立資料庫")
-
-@app.route("/")
+# 首頁 - 顯示所有歷史資料，頁面刷新時也可使用
+@app.route('/')
 def index():
-    conn = get_db()
+    # 與資料庫連線
+    conn = get_connection()
+    # 寫出 SQL 指令
     cursor = conn.cursor()
-    cursor.execute("SELECT content FROM messages ORDER BY created_at ASC")
-    messages = [row[0] for row in cursor.fetchall()]
+    # 搜尋指定資料表的指定內容
+    cursor.execute("SELECT InsertDataValue FROM InsertData;")
+    # 取得回傳資料
+    rows = cursor.fetchall()
+    # print('===========================================')
+    # print(rows)
+    # 中斷連線
+    conn.close()
+
+    # 只傳回資料
+    messages = [row[0] for row in rows]
     return render_template("index.html", messages=messages)
 
+# Socket.IO 處理資料送出
 @socketio.on('submit_data')
 def handle_submit(data):
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO messages (content) VALUES (?)", (data['text'],))
-    conn.commit()
-    emit('new_data', data, broadcast=True)
+    text = data.get('text')
 
+    if not text:
+        return
+
+    # 與資料庫連線
+    conn = get_connection()
+    # 寫出 SQL 指令
+    cursor = conn.cursor()
+    # 插入輸入資料到指定資料表的指定欄位
+    cursor.execute("INSERT INTO InsertData (InsertDataValue) VALUES (%s);", (text,))
+    # 資料上傳
+    conn.commit()
+    # 中斷連線
+    conn.close()
+
+    # 廣播新資料給所有使用者，同步頁面更新
+    emit('new_data', {'text': text}, broadcast=True)
+
+# 清除資料
 @app.route('/clear', methods=['POST'])
 def clear_data():
-    conn = get_db()
+    # 與資料庫連線
+    conn = get_connection()
+    # 寫出 SQL 指令
     cursor = conn.cursor()
-    cursor.execute('DELETE FROM messages')  # 資料表名稱要跟資料庫一致
+    # 刪除指定資料表所有資料
+    cursor.execute("DELETE FROM InsertData;")
+    # 資料上傳
     conn.commit()
+    # 中斷連線
+    conn.close()
+
+    # 廣播新資料給所有使用者，同步頁面更新
+    socketio.emit('clear_data')
+
     return redirect(url_for('index'))
 
-@socketio.on('submit_data')
-def handle_submit(data):
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO messages (content) VALUES (?)", (data['text'],))
-    conn.commit()
-    emit('new_data', data, broadcast=True)
+# 登入功能（接收帳密並返回帳號）
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    return jsonify({'success': True, 'username': username})
 
 if __name__ == '__main__':
-    init_db()
-    # socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
-    app.run(host='0.0.0.0', port=5000)
+    socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)

@@ -1,21 +1,19 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
-<!---->
 <head>
-    <!--  定義網頁編碼  -->
     <meta charset="UTF-8">
-    <!--  分頁上的文字  -->
-    <title>槽車表單系統</title>
-    <!-- RWD 自適應縮放 -->
+    <title>MXIC FAC5 槽車表單系統</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!--  利用 bootstrap 頁面渲染  -->
+
+    <!-- Bootstrap 5 -->
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+
 </head>
-<!--上下 padding 設為 4，增加可讀性-->
-<body class="container py-lg-4">
+<body class="container py-4">
+
     <!-- RWD 標題區塊 -->
-    <div class="row align-items-center border-bottom pb-2 mb-3">
+    <div class="row align-items-center border-bottom pb-3 mb-4">
         <!-- LOGO：手機上方，桌機靠右 -->
         <div class="col-12 col-md-2 text-md-end text-center mb-3 mb-md-0">
             <img src="{{ url_for('static', filename='Image/Business_LOGO.png') }}"
@@ -23,39 +21,42 @@
                  class="img-fluid"
                  style="max-height: 80px;">
         </div>
+
         <!-- 標題 -->
         <div class="col-12 col-md-8 text-center">
             <h1 class="m-0">槽車表單系統</h1>
         </div>
+
         <!-- 預留空間（可放帳號等） -->
         <div class="col-12 col-md-2 d-none d-md-block"></div>
-<!--        <button onclick="openLoginDialog()" class="btn btn-outline-primary">登入</button>-->
     </div>
 
+    <!-- 表單標題 -->
+    <h2 class="mb-3 text-center text-md-start">表單清單</h2>
 
-    <input id="input" class="form-control mb-3" placeholder="輸入資料後按 Enter">
-    <div class="d-flex gap-2 mb-4">
-        <button class="btn btn-success dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-            槽車清單
-        </button>
-        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-            <li><a class="dropdown-item" href="#">ALL</a></li>
-            <li><a class="dropdown-item" href="#">DW</a></li>
-            <li><a class="dropdown-item" href="#">GC</a></li>
-        </ul>
+    <!-- 表單輸入欄 -->
+    <div class="mb-3">
+        <input id="input" class="form-control" placeholder="輸入表單名稱" onkeydown="if(event.key === 'Enter') sendData()">
+    </div>
+
+    <!-- 按鈕列 -->
+    <div class="d-flex flex-column flex-sm-row gap-2 mb-4">
         <button onclick="sendData()" class="btn btn-primary w-100">送出</button>
         <form action="/clear" method="POST" onsubmit="return confirm('你確定要清除所有資料嗎？')" class="w-100">
             <button type="submit" class="btn btn-danger w-100">清除所有資料</button>
         </form>
     </div>
 
+    <!-- 清單訊息 -->
     <ul id="messages" class="list-group">
         {% for message in messages %}
-            <li class="list-group-item">{{ message }}</li>
+            <li class="list-group-item">{{ row[0] }}</li>
         {% endfor %}
     </ul>
 
+    <!-- JS + Socket -->
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="/static/script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
