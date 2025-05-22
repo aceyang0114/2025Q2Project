@@ -1,4 +1,4 @@
-from flask import Flask, render_template, g, request, redirect, url_for, jsonify, session
+from flask import Flask, render_template, g, request, redirect, url_for, jsonify
 from flask_socketio import SocketIO, emit
 import sqlite3
 import pymssql
@@ -9,7 +9,6 @@ PASSWORD = 'mxicagb2024'
 
 app = Flask(__name__)
 socketio = SocketIO(app)
-app.secret_key = 'your_secret_key'  # 用來啟用 session
 
 # SQL Server Express 連線，進行資料庫互動
 def get_connection():
@@ -21,23 +20,9 @@ def get_connection():
         charset='UTF-8'
     )
 
-@app.route('/', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        if username == 'admin' and password == '1234':
-            session['username'] = username
-            return redirect(url_for('menu'))
-        else:
-            return render_template('login.html', error='帳號或密碼錯誤')
-    return render_template('login.html')
-
 # 首頁 - 顯示所有歷史資料，頁面刷新時也可使用
-@app.route('/menu')
-def menu():
-    if 'username' not in session:
-        return redirect(url_for('login'))  # 強制跳回 login 頁
+@app.route('/')
+def index():
     # 與資料庫連線
     conn = get_connection()
     # 寫出 SQL 指令
@@ -53,7 +38,7 @@ def menu():
 
     # 只傳回資料
     messages = [row[0] for row in rows]
-    return render_template("menu.html", messages=messages)
+    return render_template("index.html", messages=messages)
 
 # Socket.IO 處理資料送出
 @socketio.on('submit_data')
@@ -94,12 +79,14 @@ def clear_data():
     # 廣播新資料給所有使用者，同步頁面更新
     socketio.emit('clear_data')
 
-    return redirect(url_for('menu'))
+    return redirect(url_for('index'))
 
-@app.route('/logout')
-def logout():
-    session.pop('username', None)
-    return redirect(url_for('login'))
+# 登入功能（接收帳密並返回帳號）
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    return jsonify({'success': True, 'username': username})
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)

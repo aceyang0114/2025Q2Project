@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>主選單</title>
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+</head>
+<body class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>歡迎，{{ username }}</h2>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary " onclick="return confirm('你確定要登出嗎？')">登出</a>
+    </div>
+
+    <div class="d-flex gap-2 mb-4">
+        <button class="btn btn-success dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+            槽車清單
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+            <li><a class="dropdown-item" href="#">ALL</a></li>
+            <li><a class="dropdown-item" href="#">DW</a></li>
+            <li><a class="dropdown-item" href="#">GC</a></li>
+        </ul>
+        <button onclick="sendData()" class="btn btn-primary w-100">送出</button>
+        <form action="/clear" method="POST" onsubmit="return confirm('你確定要清除所有資料嗎？')" class="w-100">
+            <button type="submit" class="btn btn-danger w-100">清除所有資料</button>
+        </form>
+    </div>
+</body>
+</html>

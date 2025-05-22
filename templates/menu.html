@@ -4,6 +4,7 @@
 <head>
     <!--  定義網頁編碼  -->
     <meta charset="UTF-8">
+    <link rel="icon" href="{{ url_for('static', filename='Image/favicon.ico') }}" type="image/x-icon">
     <!--  分頁上的文字  -->
     <title>槽車表單系統</title>
     <!-- RWD 自適應縮放 -->
@@ -23,20 +24,39 @@
                  class="img-fluid"
                  style="max-height: 80px;">
         </div>
+        <div class="col-12 col-md-1 d-none d-md-block">
+            <a href="{{ url_for('logout') }}" class="btn btn-warning">首頁</a>
+        </div>
+        <div class="col-12 col-md-1 text-center mb-3 mb-md-0">
+            <div class="dropdown">
+                <button class="btn btn-success dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                    槽車清單
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    <li><a class="dropdown-item" href="#">ALL</a></li>
+                    <li><a class="dropdown-item" href="#">DW</a></li>
+                    <li><a class="dropdown-item" href="#">GC</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-12 col-md-1 d-none d-md-block">
+            <a href="{{ url_for('logout') }}" class="btn btn-warning">報表</a>
+        </div>
         <!-- 標題 -->
-        <div class="col-12 col-md-8 text-center">
+        <div class="col-12 col-md-6 text-center">
             <h1 class="m-0">槽車表單系統</h1>
         </div>
         <!-- 預留空間（可放帳號等） -->
-        <div class="col-12 col-md-2 d-none d-md-block"></div>
-<!--        <button onclick="openLoginDialog()" class="btn btn-outline-primary">登入</button>-->
+        <div class="col-12 col-md-1 d-none d-md-block">
+            <a href="{{ url_for('logout') }}" class="btn btn-warning" onclick="return confirm('你確定要登出嗎？')">登出</a>
+        </div>
     </div>
 
 
     <input id="input" class="form-control mb-3" placeholder="輸入資料後按 Enter">
     <div class="d-flex gap-2 mb-4">
         <button class="btn btn-success dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-            槽車清單
+            槽車充填
         </button>
         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
             <li><a class="dropdown-item" href="#">ALL</a></li>
