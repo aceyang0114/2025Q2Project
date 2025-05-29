@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>手動上傳巡檢資料系統</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+</head>
+<body>
+  <h2>輸入巡檢資訊</h2>
+
+  <label>巡檢系統<input type="text" id="System" /></label><br>
+  <label>巡檢點編號<input type="text" id="Number" /></label><br>
+
+  <button onclick="saveData()">➕ 儲存到本地</button>
+  <button onclick="uploadData()">📤 上傳所有資料</button><br><br>
+
+  <!-- 鏡頭畫面與拍照功能 -->
+  <video id="video" width="300" autoplay muted playsinline></video><br>
+  <button onclick="startCamera()">📷 啟用鏡頭</button>
+  <button onclick="captureAndRecognize()">📸 拍照並辨識</button><br>
+  <canvas id="canvas" width="300" height="200" style="display:none;"></canvas>
+
+  <p id="status">📦 本地暫存筆數：0</p>
+  <p id="ocr-status"></p>
+
+  <script>
+    let db;
+    const request = indexedDB.open("BusinessCardDB", 1);
+
+    request.onerror = (e) => console.error("❌ 資料庫開啟失敗", e);
+
+    request.onsuccess = (e) => {
+      db = e.target.result;
+      updateCount();
+    };
+
+    request.onupgradeneeded = (e) => {
+      db = e.target.result;
+      db.createObjectStore("cards", { keyPath: "id", autoIncrement: true });
+    };
+
+    function saveData() {
+      const System = document.getElementById("System").value.trim();
+      const Number = document.getElementById("Number").value.trim();
+
+      if (!System || !Number) {
+        alert("請完整輸入所有欄位！");
+        return;
+      }
+
+      const tx = db.transaction("cards", "readwrite");
+      const store = tx.objectStore("cards");
+      store.add({ System, Number });
+      tx.oncomplete = () => {
+        document.getElementById("System").value = '';
+        document.getElementById("Number").value = '';
+        updateCount();
+        alert("✅ 已儲存至本地");
+      };
+    }
+
+    function updateCount() {
+      const tx = db.transaction("cards", "readonly");
+      const store = tx.objectStore("cards");
+      const countReq = store.count();
+      countReq.onsuccess = () => {
+        document.getElementById("status").textContent = `📦 本地暫存筆數：${countReq.result}`;
+      };
+    }
+
+    function uploadData() {
+      const tx = db.transaction("cards", "readonly");
+      const store = tx.objectStore("cards");
+      const getAll = store.getAll();
+
+      getAll.onsuccess = () => {
+        const data = getAll.result;
+        if (data.length === 0) {
+          alert("⚠️ 沒有可上傳的資料！");
+          return;
+        }
+
+        fetch("/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        })
+        .then(res => res.json())
+        .then(res => {
+          if (res.success) {
+            const clearTx = db.transaction("cards", "readwrite");
+            clearTx.objectStore("cards").clear();
+            updateCount();
+            alert("✅ 上傳成功，已清除本地資料");
+          } else {
+            alert("❌ 上傳失敗");
+          }
+        });
+      };
+    }
+
+    // ========= 鏡頭拍照與 OCR 功能 =========
+
+    let stream;
+
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        document.getElementById("video").srcObject = stream;
+      } catch (err) {
+        alert("無法啟用鏡頭：" + err.message);
+      }
+    }
+
+    function captureAndRecognize() {
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataURL = canvas.toDataURL("image/png");
+
+      document.getElementById("ocr-status").textContent = "🔍 正在辨識影像內容...";
+
+      Tesseract.recognize(dataURL, 'eng+chi_tra', {
+        logger: m => console.log(m)
+      }).then(({ data: { text } }) => {
+        document.getElementById("ocr-status").textContent = "✅ 辨識完成！";
+
+        // 嘗試自動填入欄位（示範：第一行放系統，第二行放編號）
+        const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+        document.getElementById("System").value = lines[0] || '';
+        document.getElementById("Number").value = lines[1] || '';
+      }).catch(err => {
+        console.error("OCR 失敗", err);
+        document.getElementById("ocr-status").textContent = "❌ 辨識失敗";
+      });
+    }
+  </script>
+</body>
+</html>

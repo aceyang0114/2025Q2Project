@@ -26,7 +26,7 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        if username == 'admin' and password == '1234':
+        if username == '1' and password == '1':
             session['username'] = username
             return redirect(url_for('menu'))
         else:

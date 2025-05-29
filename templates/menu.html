@@ -18,18 +18,14 @@
     <!-- RWD 標題區塊 -->
     <div class="row align-items-center border-bottom pb-2 mb-3">
         <!-- LOGO：手機上方，桌機靠右 -->
-        <div class="col-12 col-md-2 text-md-end text-center mb-3 mb-md-0">
+        <div class="col-12 col-md-6 d-flex align-items-center mb-3 mb-md-0">
             <img src="{{ url_for('static', filename='Image/Business_LOGO.png') }}"
                  alt="Logo"
                  class="img-fluid"
                  style="max-height: 80px;">
-        </div>
-        <div class="col-12 col-md-1 d-none d-md-block">
-            <a href="{{ url_for('logout') }}" class="btn btn-warning">首頁</a>
-        </div>
-        <div class="col-12 col-md-1 text-center mb-3 mb-md-0">
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-dark">首頁</a>
             <div class="dropdown">
-                <button class="btn btn-success dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                <button class="btn btn-outline-dark dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
                     槽車清單
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
@@ -38,16 +34,17 @@
                     <li><a class="dropdown-item" href="#">GC</a></li>
                 </ul>
             </div>
-        </div>
-        <div class="col-12 col-md-1 d-none d-md-block">
-            <a href="{{ url_for('logout') }}" class="btn btn-warning">報表</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-dark">報表</a>
+            <div class="col-10 col-md-4 text-center mb-3 mb-md-0">
+                <h1 class="m-0">槽車表單系統</h1>
+            </div>
         </div>
         <!-- 標題 -->
-        <div class="col-12 col-md-6 text-center">
-            <h1 class="m-0">槽車表單系統</h1>
-        </div>
+<!--        <div class="col-6 col-md-4 text-center mb-3 mb-md-0">-->
+<!--            <h1 class="m-0">槽車表單系統</h1>-->
+<!--        </div>-->
         <!-- 預留空間（可放帳號等） -->
-        <div class="col-12 col-md-1 d-none d-md-block">
+        <div class="col-12 col-md-1 d-flex justify-content-md-end justify-content-center">
             <a href="{{ url_for('logout') }}" class="btn btn-warning" onclick="return confirm('你確定要登出嗎？')">登出</a>
         </div>
     </div>
