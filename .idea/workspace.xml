@@ -5,11 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ef38c285-0256-44ba-aa3b-b2f8d9fe9f8b" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/RFID_app.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/RFID.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/detect_and_ocr.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/offline.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/via_to_yolo.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/menu.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/menu.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RFID_app.py" beforeDir="false" afterPath="$PROJECT_DIR$/RFID_app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/RFID.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/RFID.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/RFID_V0.html" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -19,8 +22,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Python Script" />
         <option value="HTML File" />
+        <option value="Python Script" />
       </list>
     </option>
   </component>
@@ -45,10 +48,13 @@
     "JavaScript Debug.index.html.executor": "Run",
     "JavaScript Debug.menu.html.executor": "Run",
     "JavaScript Debug.menu_.html.executor": "Run",
+    "JavaScript Debug.offline.html.executor": "Run",
     "Python.RFID_app.executor": "Run",
     "Python.app.executor": "Run",
     "Python.app_Database.executor": "Run",
     "Python.app_login.executor": "Run",
+    "Python.test.executor": "Run",
+    "Python.via_to_yolo.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "main",
@@ -62,10 +68,7 @@
   }
 }]]></component>
   <component name="RunManager" selected="Python.RFID_app">
-    <configuration name="menu_.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://localhost:63342/2025Q2Project/templates/menu_.html" useBuiltInWebServerPort="true">
-      <method v="2" />
-    </configuration>
-    <configuration name="menu.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://localhost:63342/2025Q2Project/templates/menu.html" useBuiltInWebServerPort="true">
+    <configuration name="offline.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://localhost:63342/2025Q2Project/templates/offline.html" useBuiltInWebServerPort="true">
       <method v="2" />
     </configuration>
     <configuration name="RFID_app" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
@@ -114,7 +117,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="app_login" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="2025Q2Project" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -128,7 +131,30 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/app_login.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="via_to_yolo" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="2025Q2Project" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/via_to_yolo.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -140,10 +166,10 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.RFID_app" />
+        <item itemvalue="JavaScript Debug.offline.html" />
+        <item itemvalue="Python.test" />
+        <item itemvalue="Python.via_to_yolo" />
         <item itemvalue="Python.app" />
-        <item itemvalue="JavaScript Debug.menu.html" />
-        <item itemvalue="JavaScript Debug.menu_.html" />
-        <item itemvalue="Python.app_login" />
       </list>
     </recent_temporary>
   </component>
@@ -171,7 +197,11 @@
       <workItem from="1745563622253" duration="421000" />
       <workItem from="1745892248475" duration="2487000" />
       <workItem from="1746585037649" duration="2784000" />
-      <workItem from="1747018782048" duration="65317000" />
+      <workItem from="1747018782048" duration="75122000" />
+      <workItem from="1748852013687" duration="5733000" />
+      <workItem from="1748927845032" duration="1732000" />
+      <workItem from="1748934229574" duration="866000" />
+      <workItem from="1748937245451" duration="16225000" />
     </task>
     <servers />
   </component>
@@ -179,8 +209,10 @@
     <option name="version" value="3" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/2025Q2Project$test.coverage" NAME="test Coverage Results" MODIFIED="1748934818224" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/2025Q2Project$app_login.coverage" NAME="app_login Coverage Results" MODIFIED="1747895092310" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/2025Q2Project$RFID_app.coverage" NAME="RFID_app Coverage Results" MODIFIED="1748505162878" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/2025Q2Project$RFID_app.coverage" NAME="RFID_app Coverage Results" MODIFIED="1749373164760" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/2025Q2Project$via_to_yolo.coverage" NAME="via_to_yolo Coverage Results" MODIFIED="1748850086058" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/2025Q2Project$app.coverage" NAME="app Coverage Results" MODIFIED="1748423780650" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/2025Q2Project$app_Database.coverage" NAME="app_Database Coverage Results" MODIFIED="1747297715509" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="{{ url_for('static', filename='Image/favicon.ico') }}" type="image/x-icon">
+    <title>巡檢系統（離線版）</title>
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+</head>
+<body>
+<h2>輸入巡檢資訊</h2>
+
+<label>巡檢系統<input type="text" id="System"></label><br>
+<label>巡檢點編號<input type="text" id="Number"></label><br>
+
+<button onclick="saveData()">➕ 儲存到本地</button>
+<button onclick="uploadData()">📤 上傳所有資料</button><br><br>
+
+<video id="video" width="300" autoplay muted playsinline></video><br>
+<button onclick="startCamera()">📷 啟用鏡頭</button>
+<button onclick="captureAndRecognize()">📸 拍照並辨識</button><br>
+
+<p id="status">📦 本地暫存筆數：0</p>
+<p id="ocr-status"></p>
+
+<script>
+    let db;
+    const request = indexedDB.open("BusinessCardDB", 1);
+
+    request.onerror = (e) => console.error("❌ 資料庫開啟失敗", e);
+
+    request.onsuccess = (e) => {
+        db = e.target.result;
+        updateCount();
+    };
+
+    request.onupgradeneeded = (e) => {
+        db = e.target.result;
+        db.createObjectStore("cards", { keyPath: "id", autoIncrement: true });
+    };
+
+    function saveData() {
+        const System = document.getElementById("System").value.trim();
+        const Number = document.getElementById("Number").value.trim();
+        if (!System || !Number) {
+            alert("請完整輸入所有欄位！");
+            return;
+        }
+        const tx = db.transaction("cards", "readwrite");
+        const store = tx.objectStore("cards");
+        store.add({ System, Number });
+        tx.oncomplete = () => {
+            document.getElementById("System").value = '';
+            document.getElementById("Number").value = '';
+            updateCount();
+            alert("✅ 已儲存至本地");
+        };
+    }
+
+    function updateCount() {
+        const tx = db.transaction("cards", "readonly");
+        const store = tx.objectStore("cards");
+        const countReq = store.count();
+        countReq.onsuccess = () => {
+            document.getElementById("status").textContent = `📦 本地暫存筆數：${countReq.result}`;
+        };
+    }
+
+    let stream;
+    async function startCamera() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            document.getElementById("video").srcObject = stream;
+        } catch (err) {
+            alert("無法啟用鏡頭：" + err.message);
+        }
+    }
+
+    async function captureAndRecognize() {
+        const video = document.getElementById("video");
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0);
+
+        const imageData = canvas.toDataURL("image/png");
+        document.getElementById("ocr-status").textContent = "🔍 正在辨識影像中...";
+
+        const imgTensor = await imageToTensor(canvas);
+        const session = await ort.InferenceSession.create("/static/model/your_model.onnx");
+        const feeds = { input: imgTensor };
+        const results = await session.run(feeds);
+
+        const output = results.output.data;
+        const text = decodeText(output);
+
+        document.getElementById("ocr-status").textContent = "✅ 已辨識完成";
+        document.getElementById("System").value = text.system || "";
+        document.getElementById("Number").value = text.number || "";
+    }
+
+    async function imageToTensor(canvas) {
+        const ctx = canvas.getContext("2d");
+        const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const floatArray = new Float32Array(width * height * 3);
+        for (let i = 0; i < width * height; i++) {
+            floatArray[i * 3] = data[i * 4] / 255.0;
+            floatArray[i * 3 + 1] = data[i * 4 + 1] / 255.0;
+            floatArray[i * 3 + 2] = data[i * 4 + 2] / 255.0;
+        }
+        return new ort.Tensor("float32", floatArray, [1, 3, height, width]);
+    }
+
+    function decodeText(output) {
+        // 假設你訓練時使用 CTC 並有字典
+        const dictionary = [..."0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-值班室GC"];
+        const indices = Array.from(output).map(i => Math.round(i));
+        const chars = indices.map(i => dictionary[i] || '').join('');
+        const system = chars.split("\n")[0];
+        const number = chars.split("\n")[1];
+        return { system, number };
+    }
+</script>
+</body>
+</html>
