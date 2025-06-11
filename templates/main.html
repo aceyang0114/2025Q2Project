@@ -1,181 +1,283 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <link rel="icon" href="{{ url_for('static', filename='Image/favicon.ico') }}" type="image/x-icon">
-    <title>巡檢系統（線上模式）</title>
-    <script src="https://cdn.jsdelivr.net/npm/openvino@latest/dist/openvino-web.js"></script>
+  <meta charset="UTF-8">
+  <link rel="icon" href="{{ url_for('static', filename='Image/favicon.ico') }}" type="image/x-icon">
+  <title>巡檢系統</title>
+<!--  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>-->
 </head>
 <body>
-<h2>輸入巡檢資訊</h2>
-<label>巡檢系統<input type="text" id="System" /></label><br>
-<label>巡檢點編號<input type="text" id="Number" /></label><br>
-<button onclick="saveData()">➕ 儲存到本地</button>
-<button onclick="uploadData()">📤 上傳所有資料</button><br><br>
+  <h2>輸入巡檢資訊</h2>
 
-<video id="video" width="300" autoplay muted playsinline></video><br>
-<button onclick="startCamera()">📷 啟用鏡頭</button>
-<button onclick="captureAndRecognize()">📸 拍照並辨識</button><br>
-<canvas id="canvas" style="display:none;"></canvas>
-<p id="status">📦 本地暫存筆數：0</p>
-<p id="ocr-status"></p>
-<button onclick="initOV()">載入模型</button>
+  <label>巡檢系統<input type="text" id="System" /></label><br>
+  <label>巡檢點編號<input type="text" id="Number" /></label><br>
+
+  <button onclick="saveData()">➕ 儲存到本地</button>
+  <button onclick="uploadData()">📤 上傳所有資料</button><br><br>
+
+  <!-- 鏡頭畫面與拍照功能 -->
+  <video id="video" width="300" autoplay muted playsinline></video><br>
+  <button onclick="startCamera()">📷 啟用鏡頭</button>
+  <button onclick="captureAndRecognize()">📸 拍照並辨識</button><br>
+  <canvas id="canvas" width="300" height="200" style="display:none;"></canvas>
+
+  <p id="status">📦 本地暫存筆數：0</p>
+  <p id="ocr-status"></p>
+
+  <script src="{{ url_for('static', filename='js/ort.min.js') }}" defer></script>
+  <script>
+      // window.startCamera = startCamera;
+      // window.captureAndRecognize = captureAndRecognize;
+      // window.saveData = saveData;
+      // window.uploadData = uploadData;
+      // window.initModel = initModel;
+      let db;
+      let yoloSession, ocrSession;
+      const request = indexedDB.open("BusinessCardDB", 1);
+
+      request.onerror = (e) => console.error("❌ 資料庫開啟失敗", e);
+
+      request.onsuccess = (e) => {
+          db = e.target.result;
+          updateCount();
+      };
+
+      request.onupgradeneeded = (e) => {
+          db = e.target.result;
+          db.createObjectStore("cards", { keyPath: "id", autoIncrement: true });
+      };
+
+      async function initModels() {
+          ort.env.wasm.wasmPaths = "/static/js/";
+          ort.env.wasm.numThreads = 1;  // 如果你不要多執行緒
+          ort.env.wasm.simd = false;    // 如果你不要 SIMD
+          yoloSession = await ort.InferenceSession.create('/models/yolo_model.onnx');
+          ocrSession = await ort.InferenceSession.create('/models/ocr_model.onnx');
+          console.log('✅ ONNX 模型載入成功');
+      }
+
+      window.captureAndRecognize = async () => {
+          if (!yoloSession || !ocrSession) await initModels();
+
+          const video = document.getElementById('video');
+          const canvas = document.getElementById('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          // YOLO input resize
+          const yWidth = 640, yHeight = 640;
+          const yCanvas = document.createElement('canvas');
+          yCanvas.width = yWidth; yCanvas.height = yHeight;
+          const yCtx = yCanvas.getContext('2d');
+          yCtx.drawImage(canvas, 0, 0, yWidth, yHeight);
+          const yImg = yCtx.getImageData(0,0,yWidth,yHeight).data;
+          const yArr = new Float32Array(yWidth * yHeight * 3);
+          for (let i=0; i < yWidth*yHeight; i++){
+              yArr[i*3] = yImg[i*4]/255;
+              yArr[i*3+1] = yImg[i*4+1]/255;
+              yArr[i*3+2] = yImg[i*4+2]/255;
+          }
+          const yTensor = new ort.Tensor('float32', yArr, [1,3,yHeight,yWidth]);
+          const yOut = await yoloSession.run({ images: yTensor });
+          const [boxes, scores, labels] = decodeYolo(yOut.output, canvas.width, canvas.height);
+
+          if (boxes.length === 0) {
+              alert('❌ 偵測不到文字框');
+              return;
+          }
+
+          // 先取第一個框
+          const [x, y, w, h] = boxes[0];
+          const oImg = ctx.getImageData(x, y, w, h);
+          const oc = document.createElement('canvas');
+          oc.width = w; oc.height = h;
+          oc.getContext('2d').putImageData(oImg,0,0);
+
+          const imgArr = oc.getContext('2d').getImageData(0,0,w,h).data;
+          const oArr = new Float32Array(w*h*3);
+          for (let i=0; i< w*h; i++){
+              oArr[i*3] = imgArr[i*4]/255;
+              oArr[i*3+1] = imgArr[i*4+1]/255;
+              oArr[i*3+2] = imgArr[i*4+2]/255;
+          }
+          const oTensor = new ort.Tensor('float32', oArr, [1,3,h,w]);
+          const oOut = await ocrSession.run({ input: oTensor });
+          const text = decodeOCR(oOut.output.data);
+          console.log('🔤 辨識結果:', text);
+
+          // 自動統計欄位
+          const lines = text.split(/\s*[\n，。]\s*/);
+          document.getElementById('System').value = lines[0] || '';
+          document.getElementById('Number').value = lines[1] || '';
+          document.getElementById('ocr-status').textContent = '✅ 文字辨識完成！';
+      };
+
+      function decodeYolo(output, imgW, imgH) {
+          // 假設格式 output = [ [ [x, y, w, h, score, label] ] ]
+          const arr = output.data;
+          const out = [];
+          for (let i=0; i < arr.length; i+=6) {
+              const score = arr[i+4];
+              if (score > 0.4) {
+                  const cx=arr[i], cy=arr[i+1], w=arr[i+2], h=arr[i+3];
+                  const x = (cx - w/2)*imgW;
+                  const y = (cy - h/2)*imgH;
+                  out.push([x,y,w*imgW,h*imgH]);
+              }
+          }
+          return [out, [], []];
+      }
+
+      function decodeOCR(dataArr) {
+          // 假設 CTC blacklist，非 blank 為文字索引
+          const dict = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ中文巡檢點系統空白';
+          let txt='';
+          let prev = -1;
+          const seqLen = dataArr.length / dict.length;
+          for (let t=0; t<seqLen; t++) {
+              const slice = dataArr.slice(t*dict.length, (t+1)*dict.length);
+              const idx = slice.indexOf(Math.max(...slice));
+              if (idx > 0 && idx !== prev) txt += dict[idx];
+              prev = idx;
+          }
+          return txt;
+      }
+    // =================================================================================================================
+
+      function saveData() {
+          const System = document.getElementById("System").value.trim();
+
+          const Number = document.getElementById("Number").value.trim();
+
+          if (!System || !Number) {
+              alert("請完整輸入所有欄位！");
+              return;
+          }
+
+          const tx = db.transaction("cards", "readwrite");
+          const store = tx.objectStore("cards");
+          store.add({ System, Number });
+          tx.oncomplete = () => {
+              document.getElementById("System").value = '';
+              document.getElementById("Number").value = '';
+              updateCount();
+              alert("✅ 已儲存至本地");
+          };
+      }
+
+      function updateCount() {
+          const tx = db.transaction("cards", "readonly");
+          const store = tx.objectStore("cards");
+          const countReq = store.count();
+          countReq.onsuccess = () => {
+              document.getElementById("status").textContent = `📦 本地暫存筆數：${countReq.result}`;
+          };
+      }
+
+      function uploadData() {
+          const tx = db.transaction("cards", "readonly");
+          const store = tx.objectStore("cards");
+          const getAll = store.getAll();
+
+          getAll.onsuccess = () => {
+              const data = getAll.result;
+              if (data.length === 0) {
+                  alert("⚠️ 沒有可上傳的資料！");
+                  return;
+              }
+
+              fetch("/upload", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(data),
+              })
+                  .then(res => res.json())
+                  .then(res => {
+                      if (res.success) {
+                          const clearTx = db.transaction("cards", "readwrite");
+                          clearTx.objectStore("cards").clear();
+                          updateCount();
+                          alert("✅ 上傳成功，已清除本地資料");
+                      } else {
+                          alert("❌ 上傳失敗");
+                      }
+                  });
+          };
+      }
+
+      // ========= 鏡頭拍照與 OCR 功能 =========
+
+      let stream;
+
+      async function startCamera() {
+          try {
+              stream = await navigator.mediaDevices.getUserMedia({ video: true });
+              document.getElementById("video").srcObject = stream;
+          } catch (err) {
+              alert("無法啟用鏡頭：" + err.message);
+          }
+      }
+
+      function captureAndRecognize() {
+          const video = document.getElementById("video");
+          const canvas = document.getElementById("canvas");
+          const ctx = canvas.getContext("2d");
+
+          // 動態設解析度
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+
+          // 拍照
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          // 定義裁切區域
+          const systemBox = { x: 50, y: 30, width: 400, height: 50 };
+          const numberBox = { x: 50, y: 90, width: 400, height: 50 };
+
+          // 建立子 Canvas 進行裁切
+          function cropAndOCR(box, callback) {
+              const subCanvas = document.createElement("canvas");
+              subCanvas.width = box.width;
+              subCanvas.height = box.height;
+              const subCtx = subCanvas.getContext("2d");
+              subCtx.drawImage(canvas, box.x, box.y, box.width, box.height, 0, 0, box.width, box.height);
+              const dataURL = subCanvas.toDataURL("image/png");
+
+              Tesseract.recognize(dataURL, 'chi_tra+eng', {
+                  logger: m => console.log(m)
+              }).then(({ data: { text } }) => {
+                  callback(text.trim());
+              }).catch(err => {
+                  console.error("OCR 錯誤：", err);
+                  callback("");
+              });
+          }
+
+          document.getElementById("ocr-status").textContent = "🔍 正在辨識兩個欄位...";
+
+          // 同步辨識兩個欄位
+          cropAndOCR(systemBox, (systemText) => {
+              cropAndOCR(numberBox, (numberText) => {
+                  console.log("System：", systemText);
+                  console.log("Number：", numberText);
+
+                  // 設定到欄位
+                  document.getElementById("System").value = systemText;
+                  document.getElementById("Number").value = numberText;
+
+                  document.getElementById("ocr-status").textContent = "✅ 已辨識並填入欄位";
+
+                  if (!systemText || !numberText) {
+                      alert("⚠️ 有欄位未能辨識成功，請確認影像清晰度或手動填入");
+                  }
+              });
+          });
+      }
+      // ===============================================================================================================
 
 
-<script type="module">
-    import * as ov from 'https://storage.openvinotoolkit.org/repositories/openvino/web/latest/ov.js';
-    // IndexedDB 本地存儲
-    let db;
-    const request = indexedDB.open("BusinessCardDB", 1);
-    request.onerror = e => console.error("❌ 資料庫開啟失敗", e);
-    request.onsuccess = e => { db = e.target.result; updateCount(); };
-    request.onupgradeneeded = e => {
-        db = e.target.result;
-        db.createObjectStore("cards", { keyPath: "id", autoIncrement: true });
-    };
-
-    function saveData(){
-        const tx = db.transaction("cards", "readwrite");
-        const store = tx.objectStore("cards");
-        const record = {
-            system: document.getElementById("System").value,
-            number: document.getElementById("Number").value,
-            timestamp: new Date().toISOString()
-        };
-        store.add(record);
-        tx.oncomplete = updateCount;
-    }
-
-    function updateCount(){
-        const tx = db.transaction("cards", "readonly");
-        const store = tx.objectStore("cards");
-        const request = store.getAll();
-        request.onsuccess = () => {
-            document.getElementById("status").textContent = `📦 本地暫存筆數：${request.result.length}`;
-        };
-    }
-
-    function uploadData(){
-        const tx = db.transaction("cards", "readonly");
-        const store = tx.objectStore("cards");
-        const request = store.getAll();
-        request.onsuccess = async () => {
-            const data = request.result;
-            try {
-                const res = await fetch("/upload", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(data)
-                });
-                if (res.ok) {
-                    const txDel = db.transaction("cards", "readwrite");
-                    const storeDel = txDel.objectStore("cards");
-                    data.forEach(item => storeDel.delete(item.id));
-                    txDel.oncomplete = updateCount;
-                    alert("✅ 上傳成功並清除本地資料");
-                } else {
-                    alert("❌ 上傳失敗");
-                }
-            } catch (err) {
-                alert("❌ 錯誤：" + err.message);
-            }
-        };
-    }
-
-    // 鏡頭啟用
-    let stream;
-    async function startCamera(){
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            document.getElementById("video").srcObject = stream;
-        } catch (err) {
-            alert("無法啟用鏡頭：" + err.message);
-        }
-    }
-
-    // OpenVINO 初始化
-    let ovCore, ovModel, ovCompiled;
-    async function initOV(){
-        try {
-            ovCore = new ov.Core();
-            ovModel = await ovCore.read_model("/static/models/cht_model.xml", "/static/models/cht_model.bin");
-            ovCompiled = ovCore.compile_model(ovModel, "CPU");
-            console.log("✅ OpenVINO 模型載入成功");
-        } catch (err) {
-            console.error("❌ OpenVINO 載入失敗：", err);
-            alert("模型載入失敗，請確認檔案是否存在或路徑正確");
-        }
-    }
-
-    window.initOV = initOV;
-
-    // 拍照辨識
-    async function captureAndRecognize(){
-        if (!ovCompiled) {
-            await initOV();
-            if (!ovCompiled) return;
-        }
-
-        const canvas = document.getElementById("canvas");
-        const video = document.getElementById("video");
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext("2d").drawImage(video, 0, 0);
-
-        document.getElementById("ocr-status").textContent = "🔍 正在本地辨識（OpenVINO）...";
-        try {
-            const inputTensor = imageToTensorOV(canvas);
-            const inferReq = ovCompiled.create_infer_request();
-            inferReq.set_tensor(ovCompiled.input(), inputTensor);
-            const out = inferReq.infer();
-            const data = out[ovCompiled.output().get_any_name()].data;
-            const text = decodeTextOV(Array.from(data));
-            document.getElementById("ocr-status").textContent = "✅ 已辨識完成";
-
-            const parts = text.split("\n");
-            document.getElementById("System").value = parts[0] || "";
-            document.getElementById("Number").value = parts[1] || "";
-            if (!parts[0] || !parts[1]) {
-                alert("⚠️ 有欄位未辨識成功，請確認拍攝品質或手動調整");
-            }
-        } catch (err) {
-            console.error("辨識錯誤：", err);
-            document.getElementById("ocr-status").textContent = "❌ 辨識失敗：" + err.message;
-        }
-    }
-
-    function imageToTensorOV(canvas){
-        const ctx = canvas.getContext("2d");
-        const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const float32 = new Float32Array(width * height * 3);
-        for (let i = 0; i < width * height; i++) {
-            float32[i * 3] = data[i * 4] / 255;
-            float32[i * 3 + 1] = data[i * 4 + 1] / 255;
-            float32[i * 3 + 2] = data[i * 4 + 2] / 255;
-        }
-        return new ov.Tensor(new ov.Type.f32(), [1, 3, height, width], float32);
-    }
-
-    function decodeTextOV(logits) {
-        const dict = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz一乙二三四五六七八九十百千萬巡檢系統點位編號 ";
-        const num_classes = dict.length + 1;  // 加上 blank class
-        const timesteps = logits.length / num_classes;
-
-        let result = "", prev = -1;
-
-        for (let t = 0; t < timesteps; t++) {
-            const start = t * num_classes;
-            const end = start + num_classes;
-            const timestep_logits = logits.slice(start, end);
-            const max_idx = timestep_logits.indexOf(Math.max(...timestep_logits));
-
-            if (max_idx !== 0 && max_idx !== prev) {  // 跳過 blank 和重複
-                result += dict[max_idx - 1];
-            }
-            prev = max_idx;
-        }
-        return result;
-    }
-</script>
+  </script>
 </body>
 </html>
